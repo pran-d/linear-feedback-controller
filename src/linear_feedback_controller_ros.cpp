@@ -201,6 +201,19 @@ return_type LinearFeedbackControllerRos::update_and_write_commands(
     linear_feedback_controller_msgs::controlMsgToEigen(input_control_msg_,
                                                        input_control_);
   }
+
+  // Log data being sent
+  RCLCPP_INFO_STREAM(get_node()->get_logger(),
+      "Arguments passed to compute_control: " 
+      << "\n input_control_.feedforward: " << input_control_.feedforward.transpose()
+      << "\n input_control_.feedback_gain: " << input_control_.feedback_gain.transpose()
+      << "\n input_sensor_.base_pose: " << input_sensor_.base_pose.transpose()
+      << "\n input_sensor_.base_twist: " << input_sensor_.base_twist.transpose()
+      << "\n joint positions: " << input_sensor_.joint_state.position.transpose()
+      << "\n joint velocities: " << input_sensor_.joint_state.velocity.transpose()
+      << "\n joint efforts: " << input_sensor_.joint_state.effort.transpose()
+    );
+
   // Copy the output of the control in order to log it.
   output_joint_effort_ =
       lfc_.compute_control(time_lfc, input_sensor_, input_control_,
@@ -536,10 +549,10 @@ bool LinearFeedbackControllerRos::allocate_memory() {
   input_sensor_msg_.joint_state.effort.resize(joint_nv, 0.0);
 
   input_control_.initial_state = input_sensor_;
-  input_control_.feedback_gain = Eigen::MatrixXd::Zero(nv, 2 * nv);
+  input_control_.feedback_gain = Eigen::MatrixXd::Zero(joint_nv, 2 * nv);
   input_control_.feedback_gain.fill(
       std::numeric_limits<double>::signaling_NaN());
-  input_control_.feedforward = Eigen::VectorXd::Zero(nv);
+  input_control_.feedforward = Eigen::VectorXd::Zero(joint_nv);
   input_control_.feedforward.fill(std::numeric_limits<double>::signaling_NaN());
 
   new_joint_velocity_ = Eigen::VectorXd::Zero(joint_nv);
